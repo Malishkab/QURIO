@@ -1,0 +1,13 @@
+[
+  { "name": "main_gate", "latitude": 30.351944, "longitude": 76.373611 },
+  { "name": "b_block", "latitude": 30.353056, "longitude": 76.371389 },
+  { "name": "sbop", "latitude": 30.351944, "longitude": 76.369722 },
+  { "name": "c_block", "latitude": 30.353333, "longitude": 76.370556 },
+  { "name": "e_block", "latitude": 30.353333, "longitude": 76.372222 },
+  { "name": "f_block", "latitude": 30.354167, "longitude": 76.372222 },
+  { "name": "library", "latitude": 30.354409, "longitude": 76.369945 },
+  { "name": "mech_workshop", "latitude": 30.354444, "longitude": 76.370833 },
+  { "name": "tan", "latitude": 30.353611, "longitude": 76.368056 },
+  { "name": "nirvana", "latitude": 30.352778, "longitude": 76.366944 },
+  { "name": "sports_complex", "latitude": 30.355000, "longitude": 76.365556 }
+]

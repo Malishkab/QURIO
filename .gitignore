@@ -1,0 +1,20 @@
+# Node modules
+frontend/node_modules/
+
+# Build folder
+frontend/build/
+
+# Python env
+**/venv/
+**/__pycache__/
+
+# Sensitive files (DO NOT UPLOAD)
+qurio-chatbot/credentials.json
+qurio-chatbot/quriomailfirebase.json
+qurio-chatbot/token.json
+
+# OS
+.DS_Store
+
+# Environment files
+*.env
