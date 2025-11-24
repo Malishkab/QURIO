@@ -1,4 +1,4 @@
-# app.py (diagnostic + robust fetch version)
+## app.py (diagnostic + robust fetch version)
 from flask import Flask, jsonify, session, redirect, request
 from flask_cors import CORS
 from googleapiclient.discovery import build
@@ -12,12 +12,12 @@ import os
 import re
 import traceback
 import json
+from email.utils import parsedate_to_datetime
 
 # -------------------------------
 # CONFIG / FILE PATHS
 # -------------------------------
-GOOGLE_CLIENT_SECRETS = "credentials.json"
-TOKEN_PATH = "token.json"  # saved Gmail credentials (created after OAuth)
+TOKEN_PATH = "token.json"  # Saved Gmail token file (generated after OAuth)
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 # -------------------------------
@@ -34,13 +34,23 @@ initialize_app(cred)
 db = firestore.client()
 
 # -------------------------------
+# GOOGLE OAUTH LOADED FROM ENV VAR
+# -------------------------------
+google_oauth_raw = os.getenv("GOOGLE_OAUTH_CLIENT_JSON")
+
+if not google_oauth_raw:
+    raise Exception("GOOGLE_OAUTH_CLIENT_JSON environment variable missing")
+
+google_oauth_config = json.loads(google_oauth_raw)
+
+# -------------------------------
 # FLASK INIT
 # -------------------------------
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "qurio-secret")
 CORS(app, supports_credentials=True)
 
-# Allow local insecure OAuth for dev (remove for prod)
+# Allow local insecure OAuth for dev
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 # -------------------------------
@@ -90,26 +100,32 @@ def creds_to_dict(creds: Credentials):
 
 @app.route("/authorize")
 def authorize():
-    flow = Flow.from_client_secrets_file(
-        GOOGLE_CLIENT_SECRETS,
+    flow = Flow.from_client_config(
+        google_oauth_config,
         scopes=SCOPES,
         redirect_uri=request.host_url.rstrip("/") + "/oauth2callback",
     )
-    auth_url, _ = flow.authorization_url(prompt="consent", access_type="offline", include_granted_scopes="true")
+    auth_url, _ = flow.authorization_url(
+        prompt="consent",
+        access_type="offline",
+        include_granted_scopes="true"
+    )
     return redirect(auth_url)
 
 @app.route("/oauth2callback")
 def oauth2callback():
     try:
-        flow = Flow.from_client_secrets_file(
-            GOOGLE_CLIENT_SECRETS,
+        flow = Flow.from_client_config(
+            google_oauth_config,
             scopes=SCOPES,
             redirect_uri=request.host_url.rstrip("/") + "/oauth2callback",
         )
         flow.fetch_token(authorization_response=request.url)
+
         creds = flow.credentials
         session["creds"] = creds_to_dict(creds)
         save_token(creds)
+
         return jsonify({"message": "Gmail linked successfully!"})
     except Exception as e:
         traceback.print_exc()
@@ -120,7 +136,7 @@ def oauth2callback():
 # -------------------------------
 CATEGORY_KEYWORDS = {
     "Internship": [r"internship", r"\bintern\b", r"hiring", r"job opening", r"recruitment", r"placement", r"career opportunity"],
-    "Hackathon": [r"hackathon", r"hackfest", r"code challenge", r"coding contest",r"competition",r"challenge"],
+    "Hackathon": [r"hackathon", r"hackfest", r"code challenge", r"coding contest", r"competition", r"challenge"],
     "Placement": [r"placement", r"campus drive", r"career opportunity"],
     "College": [r"college", r"notice", r"event", r"seminar"],
 }
@@ -140,51 +156,6 @@ def classify_email(text: str) -> str:
 # -------------------------------
 # FETCH EMAILS
 # -------------------------------
-# def fetch_emails_internal(days_back: int = 7):
-#     creds = load_creds()
-#     if creds is None:
-#         return {"status": "no_creds", "message": "No Gmail credentials found. Please link Gmail via /authorize."}
-#     creds = refresh_creds_if_needed(creds)
-#     if creds is None:
-#         return {"status": "error", "message": "Failed to refresh credentials."}
-#     try:
-#         service = build("gmail", "v1", credentials=creds)
-#         date_7 = (datetime.datetime.utcnow() - datetime.timedelta(days=days_back)).strftime("%Y/%m/%d")
-#         query = f"after:{date_7}"
-#         results = service.users().messages().list(userId="me", q=query, maxResults=50).execute()
-#         messages = results.get("messages", [])
-#         if not messages:
-#             return {"status": "ok", "message": "No new emails."}
-#         for msg in messages:
-#             try:
-#                 m = service.users().messages().get(userId="me", id=msg["id"]).execute()
-#                 snippet = m.get("snippet", "")
-#                 headers = m.get("payload", {}).get("headers", [])
-#                 subject = next((h["value"] for h in headers if h["name"] == "Subject"), "")
-#                 date = next((h["value"] for h in headers if h["name"] == "Date"), "")
-#                 from_head = next((h["value"] for h in headers if h["name"] == "From"), "")
-#                 full_text = f"{subject} {snippet} {from_head}"
-#                 category = classify_email(full_text)
-#                 db.collection("emails").document(msg["id"]).set({
-#                     "id": msg["id"],
-#                     "subject": subject,
-#                     "snippet": snippet,
-#                     "date": date,
-#                     "from": from_head,
-#                     "category": category,
-#                     "created_at": firestore.SERVER_TIMESTAMP,
-#                 }, merge=True)
-#             except Exception:
-#                 print(f"❌ Failed to process message id={msg.get('id')}")
-#                 traceback.print_exc()
-#         return {"status": "ok", "message": f"Synced {len(messages)} emails."}
-#     except Exception:
-#         print("❌ Error fetching emails from Gmail API")
-#         traceback.print_exc()
-#         return {"status": "error", "message": "Exception while fetching emails."}
-
-from email.utils import parsedate_to_datetime
-
 def fetch_emails_internal(days_back: int = 15):
     creds = load_creds()
     if creds is None:
@@ -197,11 +168,9 @@ def fetch_emails_internal(days_back: int = 15):
     try:
         service = build("gmail", "v1", credentials=creds)
 
-        # Date filter
         date_7 = (datetime.datetime.utcnow() - datetime.timedelta(days=days_back)).strftime("%Y/%m/%d")
         query = f"after:{date_7}"
 
-        # Fetch list
         results = service.users().messages().list(userId="me", q=query, maxResults=50).execute()
         messages = results.get("messages", [])
 
@@ -222,18 +191,16 @@ def fetch_emails_internal(days_back: int = 15):
                 full_text = f"{subject} {snippet} {from_head}"
                 category = classify_email(full_text)
 
-                # Convert Gmail date string → python datetime → Firestore timestamp
                 try:
                     parsed_date = parsedate_to_datetime(date_raw) if date_raw else None
                 except:
                     parsed_date = None
 
-                # Save to Firestore
                 db.collection("emails").document(msg["id"]).set({
                     "id": msg["id"],
                     "subject": subject,
                     "snippet": snippet,
-                    "date": parsed_date,                 # Timestamp stored properly
+                    "date": parsed_date,
                     "from": from_head,
                     "category": category,
                     "created_at": firestore.SERVER_TIMESTAMP,
