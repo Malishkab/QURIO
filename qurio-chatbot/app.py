@@ -11,22 +11,25 @@ import datetime
 import os
 import re
 import traceback
+import json
 
 # -------------------------------
 # CONFIG / FILE PATHS
 # -------------------------------
-FIREBASE_KEY = "quriomailfirebase.json"  # your Firebase service account
 GOOGLE_CLIENT_SECRETS = "credentials.json"
 TOKEN_PATH = "token.json"  # saved Gmail credentials (created after OAuth)
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 # -------------------------------
-# FIREBASE INIT
+# FIREBASE INIT (using env variable on Render)
 # -------------------------------
-if not os.path.exists(FIREBASE_KEY):
-    raise FileNotFoundError(f"Firebase service account file not found: {FIREBASE_KEY}")
+firebase_json = os.getenv("FIREBASE_KEY_JSON")
 
-cred = credentials.Certificate(FIREBASE_KEY)
+if not firebase_json:
+    raise Exception("FIREBASE_KEY_JSON environment variable missing")
+
+cred_data = json.loads(firebase_json)
+cred = credentials.Certificate(cred_data)
 initialize_app(cred)
 db = firestore.client()
 
