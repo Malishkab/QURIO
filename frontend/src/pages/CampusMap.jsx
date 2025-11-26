@@ -10,11 +10,11 @@ import Navbar from "../components/Navbar";
 const handleOpenMap = () => {
   console.log("Button clicked — trying to open map");
 
-  const win = window.open("http://127.0.0.1:5002/", "_blank");
+  const win = window.open("https://qurio-location.onrender.com/", "_blank");
 
   if (!win) {
     console.log("Popup blocked — redirecting instead");
-    window.location.href = "http://127.0.0.1:5002/";
+    window.location.href = "https://qurio-location.onrender.com/";
   }
 };
 
