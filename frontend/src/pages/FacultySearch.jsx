@@ -13,7 +13,7 @@ export default function FacultySearch({ user, onLogout }) {
 
     try {
       const res = await axios.get(
-        `http://127.0.0.1:5001/faculty?name=${name}`
+        `https://qurio-faculty.onrender.com/faculty?name=${name}`
       );
       setResult(res.data);
     } catch (err) {
