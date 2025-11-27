@@ -34,7 +34,7 @@ export default function Dashboard({ user, onLogout }) {
     setLoading(true);
     try {
       if (["Internship", "Hackathon", "Placement", "College"].includes(categoryKey)) {
-        const res = await fetch(`http://qurio-chatbot.onrender.com/api/emails/${categoryKey}`);
+        const res = await fetch(`https://qurio-chatbot.onrender.com/api/emails/${categoryKey}`);
         const data = await res.json();
         setEmails(data);
       } else {
