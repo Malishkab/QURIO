@@ -7,7 +7,7 @@ export default function Internships({ user, onLogout }) {
 
   useEffect(() => {
     axios
-      .get("http://qurio-chatbot.onrender.com/api/emails/Internship")
+      .get("https://qurio-chatbot.onrender.com/api/emails/Internship")
       .then((res) => setEmails(res.data))
       .catch((err) => console.error(err));
   }, []);
