@@ -5,7 +5,7 @@ export default function EventsList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://qurio-chatbot.onrender.com/emails/Event")
+    fetch("https://qurio-chatbot.onrender.com/emails/Event")
       .then((res) => res.json())
       .then((data) => {
         setEmails(data);
