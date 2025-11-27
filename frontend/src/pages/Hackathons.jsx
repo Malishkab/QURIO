@@ -5,7 +5,7 @@ export default function Hackathons() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://qurio-chatbot.onrender.com/emails/Hackathon")
+    fetch("https://qurio-chatbot.onrender.com/emails/Hackathon")
       .then((res) => res.json())
       .then((data) => {
         setEmails(data);
