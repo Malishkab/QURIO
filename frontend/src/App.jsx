@@ -1,121 +1,94 @@
-import React, { useState, useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "./firebaseConfig";
+import React, { useState } from "react";
+import Navbar from "../components/Navbar";
+import { useNavigate } from "react-router-dom";
 
-// --------------------------------------
-//               Pages
-// --------------------------------------
-import Dashboard from "./pages/Dashboard";
-import Chatbot from "./pages/Chatbot";
-import FacultySchedule from "./pages/FacultySchedule";
-import FacultySearch from "./pages/FacultySearch";
-import Internships from "./pages/Internships";
-import Hackathons from "./pages/Hackathons";
-import EventsList from "./pages/EventsList";
-import CampusMap from "./pages/CampusMap";
-import Login from "./pages/Login";
+export default function Dashboard({ user, onLogout }) {
+  const navigate = useNavigate();
 
-// --------------------------------------
-//             Components
-// --------------------------------------
-import EmailDashboard from "./components/EmailDashboard";
+  const categories = [
+    { 
+      name: "Internships", 
+      key: "Internship", 
+      description: "Find latest opportunities",
+      emoji: "💼"
+    },
+    { 
+      name: "Hackathons", 
+      key: "Hackathon", 
+      description: "Upcoming competitions",
+      emoji: "🚀"
+    },
+    { 
+      name: "Faculty Search", 
+      key: "FacultySearch", 
+      description: "Find faculty availability",
+      emoji: "🔍"
+    },
+    { 
+      name: "Campus Map", 
+      key: "Map", 
+      description: "Find your way around campus",
+      emoji: "🗺️"
+    },
+  ];
 
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const handleCategorySelect = (categoryKey) => {
+    if (categoryKey === "FacultySearch") return navigate("/faculty-search");
+    if (categoryKey === "Map") return navigate("/campus-map");
+    if (categoryKey === "Internship") return navigate("/internships");
+    if (categoryKey === "Hackathon") return navigate("/hackathons");
 
-  // --------------------------------------
-  // 💠 Firebase Auth Listener
-  // --------------------------------------
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // --------------------------------------
-  // 🔐 Logout Handler
-  // --------------------------------------
-  const handleLogout = async () => {
-    await signOut(auth);
-    setUser(null);
+    navigate("/");
   };
 
-  // --------------------------------------
-  // ⏳ Show Loading Screen
-  // --------------------------------------
-  if (loading) {
-    return (
-      <p className="text-center mt-20 text-lg text-indigo-600">
-        Loading...
-      </p>
-    );
-  }
-
-  // --------------------------------------
-  // 🔑 If Not Logged In → Login Page
-  // --------------------------------------
-  if (!user) {
-    return <Login onLogin={setUser} />;
-  }
-
-  // --------------------------------------
-  // 🌐 App Routes
-  // --------------------------------------
   return (
-    <Routes>
-      {/* Dashboard (Home) */}
-      <Route
-        path="/"
-        element={<Dashboard user={user} onLogout={handleLogout} />}
-      />
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white">
+      <Navbar user={user} onLogout={onLogout} />
 
-      {/* Chatbot */}
-      <Route
-        path="/chatbot"
-        element={<Chatbot user={user} onLogout={handleLogout} />}
-      />
+      {/* MAIN CONTENT */}
+      <div className="max-w-7xl mx-auto px-8 mt-16">
+        
+        {/* Welcome Section */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-extrabold text-indigo-700 tracking-tight">
+            Welcome, {user.username}! <span className="text-3xl">👋</span>
+          </h1>
+          <p className="text-gray-500 mt-2 text-lg">
+            Here's what's available for you today.
+          </p>
+        </div>
 
-      {/* Faculty Tools */}
-      <Route
-        path="/faculty-schedule"
-        element={<FacultySchedule user={user} onLogout={handleLogout} />}
-      />
-      <Route
-        path="/faculty-search"
-        element={<FacultySearch user={user} onLogout={handleLogout} />}
-      />
+        {/* Quick Access Title */}
+        <h2 className="text-2xl font-semibold text-indigo-700 mb-6">
+          Quick Access
+        </h2>
 
-      {/* Email-Based Screens */}
-      <Route
-        path="/internships"
-        element={<Internships user={user} onLogout={handleLogout} />}
-      />
-      <Route
-        path="/hackathons"
-        element={<Hackathons user={user} onLogout={handleLogout} />}
-      />
-      <Route
-        path="/eventslist"
-        element={<EventsList user={user} onLogout={handleLogout} />}
-      />
-      <Route
-        path="/emails"
-        element={<EmailDashboard user={user} onLogout={handleLogout} />}
-      />
+        {/* Category Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {categories.map((cat) => (
+            <button
+              key={cat.name}
+              onClick={() => handleCategorySelect(cat.key)}
+              className="
+                bg-white p-6 rounded-2xl shadow-sm border border-indigo-100 
+                hover:shadow-xl hover:scale-[1.03] transition-all group
+                text-left
+              "
+            >
+              <div className="text-4xl mb-3">{cat.emoji}</div>
 
-      {/* Campus Map */}
-      <Route
-        path="/campus-map"
-        element={<CampusMap user={user} onLogout={handleLogout} />}
-      />
+              <h3 className="font-semibold text-lg text-gray-800 group-hover:text-indigo-700">
+                {cat.name}
+              </h3>
 
-      {/* Catch-All Redirect */}
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+              <p className="text-sm text-gray-500 mt-1">
+                {cat.description}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
+
